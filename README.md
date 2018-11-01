@@ -166,8 +166,12 @@ files, namespaces, and packages. A program is composed of zero or more
 files (type FILE), each of which contains one or more namespace blocks
 (type NAMESPACE_BLOCK). Namespace blocks contain type and method
 declarations (type TYPE_DECL and METHOD). Abstract syntax tree (AST) edges must exist
-from files to namespace blocks and from namespace blocks to the type
-and method declarations they contain. The figure below shows how a
+from files to namespace blocks. Structural elements below namespce blocks
+are not connected to their AST parents by an edge. Instead the AST_PARENT_TYPE
+and AST_PARENT_FULL_NAME properties are used to inform the backend about the
+AST relation of methods (type METHOD) and type declarations (type TYPE_DECL) to
+their parents. The property FULL_NAME thereby must be a unique identifier for
+the 3 node types METHOD, TYPE_DECL and NAMESPACE_BLOCK. The figure below shows how a
 Java class definition is represented in a Code Property Graph.
 
 ![Program Structure](images/cpg-internal-1.png)
@@ -266,12 +270,13 @@ designated call node (type CALL). Arguments are either identifiers
 or method references (type METHOD_REF). Each argument has an argument
 index property (type ARGUMENT_INDEX) to indicate which parameter it is
 associated with. Calls are connected to their arguments via outgoing
-AST edges, and to method instance nodes (type METHOD_INST) via call
-edges (type CALL). Method-instance nodes represent concrete
-instantiations of method declarations, that is, method declarations
-along with type parameters. Method nodes are connected to type
-arguments (type TYPE_ARGUMENT) via AST edges, and to their
-corresponding method declaration via references edges (type REF) as shown below.
+AST edges, and are associated with their corrsponding method-instance
+(type METHOD_INST) via their METHOD_INST_FULL_NAME property.
+Method-instance nodes represent concrete instantiations of method
+declarations, that is, method declarations along with type parameters.
+Method nodes are connected to type arguments (type TYPE_ARGUMENT) via
+AST edges, and are associated with their corresponding method via their
+METHOD_FULL_NAME property.
 
 ![Call Site](images/cpg-internal-4.png)
 
@@ -343,6 +348,78 @@ free-text strings.
 <!-- layers later in the processing pipeline for code analysis systems. -->
 
 
+# Loading a codepropertygraph into a specific graph db
+Cpg loading/querying should work for any Tinkerpop-enabled database. Here's how you can load a cpg for a few example databases in the sbt console - the next section will list some queries you can interactively run from there.
+
+There are some sample cpgs in this repository in the `resources/cpgs` directory.
+
+### [Tinkergraph (in memory reference db)](http://tinkerpop.apache.org/docs/current/reference/#tinkergraph-gremlin)
+```
+sbt cpgloaderTinkergraph/console
+```
+```scala
+val cpg = io.shiftleft.cpgloading.tinkergraph.CpgLoader.loadCodePropertyGraph("cpg.bin.zip")
+```
+
+### [Neo4j](http://tinkerpop.apache.org/docs/current/reference/#neo4j-gremlin)
+```
+rm -rf /tmp/cpg_data
+sbt cpgloaderNeo4j/console
+```
+```scala
+val dbPath = "/tmp/cpg_data"
+val loader = new io.shiftleft.cpgloading.neo4j.CpgLoader(dbPath)
+val cpg = loader.loadCodePropertyGraph("cpg.bin.zip")
+```
+### [Janusgraph](http://janusgraph.org/)
+```
+sbt cpgloaderJanusgraph/console
+```
+```scala
+val cpg = io.shiftleft.cpgloading.janusgraph.CpgLoader.loadCodePropertyGraph("cpg.bin.zip")
+```
+
+# Querying the cpg
+Once you've loaded a cpg you can run queries, which are provided by the `query-primitives` subproject. Note that if you're in the sbt shell you can play with it interactively: `TAB` completion is your friend. Otherwise your IDE will assist. 
+Don't forget to run `import io.shiftleft.queryprimitives.steps.Implicits._`.
+
+Here are some simple traversals to get all the base nodes. Running all of these without errors is a good test to ensure that your cpg is valid: 
+
+```scala
+import io.shiftleft.queryprimitives.steps.Implicits._
+
+cpg.literal.toList
+cpg.file.toList
+cpg.namespace.toList
+cpg.types.toList
+cpg.methodReturn.toList
+cpg.param.toList
+cpg.member.toList
+cpg.call.toList
+cpg.local.toList
+cpg.identifier.toList
+cpg.argument.toList
+cpg.typeDecl.toList
+cpg.method.toList
+cpg.methodInst.toList
+```
+
+From here you can traverse through the cpg. The query-primitives DSL ensures that only valid steps are available - anything else will result in a compile error:
+
+```scala
+pg.method.name("getAccountList").parameter.toList
+/* List(
+ *   MethodParameterIn(Some(v[7054781587948444580]),this,0,this,BY_SHARING,io.shiftleft.controller.AccountController,Some(28),None,None,None), 
+ *   MethodParameterIn(Some(v[7054781587948444584]),request,2,request,BY_SHARING,javax.servlet.http.HttpServletRequest,Some(28),None,None,None),
+ *   MethodParameterIn(Some(v[7054781587948444582]),response,1,response,BY_SHARING,javax.servlet.http.HttpServletResponse,Some(28),None,None,None)
+ *   )
+ **/
+
+cpg.method.name("getAccountList").definingTypeDecl.toList.head
+// TypeDecl(Some(v[464]),AccountController,io.shiftleft.controller.AccountController,false,List(java.lang.Object))
+```
+
+
 # References
 
 [1]  Rodriguez and Neubauer - The Graph Traversal Pattern:
@@ -353,3 +430,4 @@ free-text strings.
 
 [3] The ShiftLeft Tinkergraph
     https://github.com/ShiftLeftSecurity/tinkergraph-gremlin
+
