@@ -85,7 +85,7 @@
          "outEdges" : [
              {"edgeName": "AST", "inNodes": ["METHOD_RETURN", "METHOD_PARAMETER_IN",
                                              "MODIFIER", "BLOCK", "TYPE_PARAMETER"]},
-             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "UNKNOWN"]}
+             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "BLOCK", "UNKNOWN"]}
          ]
         },
 
@@ -160,7 +160,7 @@
          "comment" : "Literal/Constant",
          "is": ["DECLARATION", "DATA_FLOW_OBJECT", "EXPRESSION"],
          "outEdges" : [
-             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "UNKNOWN"]}
+             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "BLOCK", "UNKNOWN"]}
          ]
         },
         {"id": 15, "name" : "CALL",
@@ -169,8 +169,9 @@
          "comment" : "A (method)-call",
          "is": ["EXPRESSION"],
          "outEdges" : [
-             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "UNKNOWN"]},
-             {"edgeName": "AST", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF"]}
+             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "BLOCK", "UNKNOWN"]},
+             {"edgeName": "AST", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF"]},
+             {"edgeName": "RECEIVER", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "UNKNOWN"]}
          ]
         },
         {"id":23, "name" : "LOCAL",
@@ -184,7 +185,7 @@
          "is": ["DATA_FLOW_OBJECT", "EXPRESSION", "LOCAL_LIKE"],
          "outEdges" : [
              {"edgeName": "REF", "inNodes": ["LOCAL"]},
-             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "UNKNOWN"]}
+             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "BLOCK", "UNKNOWN"]}
          ]
         },
         {"id":30, "name": "RETURN",
@@ -197,8 +198,9 @@
          ]
         },
         {"id":31, "name": "BLOCK",
-         "keys": [ "ORDER", "ARGUMENT_INDEX", "LINE_NUMBER", "LINE_NUMBER_END", "COLUMN_NUMBER", "COLUMN_NUMBER_END"],
+         "keys": [ "CODE", "ORDER", "ARGUMENT_INDEX", "TYPE_FULL_NAME", "LINE_NUMBER", "LINE_NUMBER_END", "COLUMN_NUMBER", "COLUMN_NUMBER_END"],
          "comment" : "A structuring block in the AST.",
+         "is": [ "EXPRESSION" ],
          "outEdges" : [
              {"edgeName": "AST", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "LOCAL", "UNKNOWN"]}
          ]
@@ -222,7 +224,7 @@
           "comment":"Reference to a method instance.",
          "is": ["EXPRESSION"],
           "outEdges": [
-            {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "UNKNOWN"]}
+            {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "METHOD_REF", "RETURN", "BLOCK", "UNKNOWN"]}
           ]
         },
 
@@ -234,7 +236,7 @@
          "comment" : "A language-specific node",
          "is": ["EXPRESSION"],
          "outEdges" : [
-             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "RETURN", "METHOD_REF"]},
+             {"edgeName": "CFG", "inNodes": ["CALL", "IDENTIFIER", "LITERAL", "RETURN", "METHOD_REF", "BLOCK", "UNKNOWN"]},
              {"edgeName": "AST", "inNodes": ["LITERAL", "MEMBER",
                                              "MODIFIER", "ARRAY_INITIALIZER", "CALL", "LOCAL",
                                              "IDENTIFIER", "RETURN", "BLOCK", "METHOD_INST", "UNKNOWN"]}
@@ -256,14 +258,14 @@
         {"id" : 19, "name" : "CFG", "comment" : "Control flow", "keys" : [] },
 
         {"id" : 9, "name" : "CONTAINS_NODE", "keys" : ["LOCAL_NAME", "INDEX"], "comment" : "Membership relation for a compound object"},
-        {"id" : 28, "name" : "CONTAINS", "keys" : [], "comment" : "Shortcut over multiple AST edges"},
         {"id" : 41, "name": "CAPTURED_BY", "comment" : "Connection between a capture LOCAL and the corresponding CLOSURE_BINDING", "keys": []},
 
         // Edges to represent type relations
 
         {"id" : 22, "name" : "BINDS_TO", "keys": [], "comment" : "Type argument binding to a type parameter.", "keys" : [] },
         {"id" : 10, "name" : "REF", "keys" : [], "comment" : "Referencing to e.g. a LOCAL" },
-        {"id" : 30, "name": "VTABLE", "comment" : "Indicates that a method is part of the vtable of a certain type declaration.", "keys": []}
+        {"id" : 30, "name": "VTABLE", "comment" : "Indicates that a method is part of the vtable of a certain type declaration.", "keys": []},
+        {"id" : 55, "name": "RECEIVER", "comment" : "The receiver of a method call which is either an object or a pointer.", "keys": []}
 
     ],
 
@@ -284,7 +286,8 @@
         {"id" : 1, "name" : "JAVA", "comment" : ""},
         {"id" : 2, "name" : "JAVA_SCRIPT", "comment" : ""},
         {"id" : 3, "name" : "GOLANG", "comment" : ""},
-        {"id" : 4, "name" : "CSHARP", "comment" : ""}
+        {"id" : 4, "name" : "CSHARP", "comment" : ""},
+        {"id" : 5, "name" : "FUZZYC", "comment" : ""}
     ],
 
     "modifierTypes" : [
